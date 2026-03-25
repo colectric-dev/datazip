@@ -36,7 +36,7 @@ docs = [
 ]
 
 [tool.tox]
-env_list = [ "linters", "prep", "3.13", "3.14", "coverage", "docs" ]
+env_list = [ "linters", "prep", "3.13", "3.14", "coverage" ]
 
 [tool.tox.env.prep]
 skip_install = true
