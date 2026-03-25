@@ -20,9 +20,9 @@ import numpy as np
 import orjson as json
 import pandas as pd
 import polars as pl
-from etoolbox import __version__
-from etoolbox._optional import plotly, sqlalchemy
 
+from datazip import __version__
+from datazip._optional import plotly, sqlalchemy
 from datazip._utils import (
     _get_klass,
     _get_username,
@@ -218,7 +218,7 @@ class DataZip(ZipFile):
             Create an object that you would like to save as a
             [DataZip][datazip.core.DataZip].
 
-            >>> from etoolbox.datazip._test_classes import _TestKlass
+            >>> from datazip._test_classes import _TestKlass
             >>> obj = _TestKlass(a=5, b={"c": [2, 3.5]})
             >>> obj
             _TestKlass(a=5, b={'c': [2, 3.5]})
@@ -510,64 +510,14 @@ class DataZip(ZipFile):
             LOGGER.error("Namedtuple will be returned as a normal tuple, %r", exc)
             return tuple(obj["items"].values())
 
-    decode_pd_df: ClassVar[dict[tuple, Callable]] = {
-        (True, True, True, True): lambda df, cols, names, dtypes: df.set_axis(
-            pd.MultiIndex.from_tuples(cols, names=names), axis=1
-        ).astype({tuple(a): b for a, b in dtypes}),
-        (True, False, True, False): lambda df, cols, names, _: df.set_axis(
-            pd.MultiIndex.from_tuples(cols, names=names), axis=1
-        ),
-        (True, True, False, False): lambda df, cols, names, dtypes: df.set_axis(
-            pd.Index(cols, name=names[0]), axis=1
-        ).astype(dict(dtypes)),
-        (True, False, False, False): lambda df, cols, names, _: df.set_axis(
-            pd.Index(cols, name=names[0]), axis=1
-        ),
-        (False, True, False, False): lambda df, _, __, dtypes: df.astype(dict(dtypes)),
-        (False, False, False, False): lambda df, _, __, ___: df,
-        # pandas 2.0 doesn't raise a ValueError when there are non str column names
-        # it powers through and restores them. When combined with ujson turning tuples
-        # into strings, rather than lists, we have to be able to more actively process
-        # dtype info
-        (False, True, False, True): lambda df, _, __, dtypes: df.astype(
-            {tuple(a): b for a, b in dtypes}
-        ),
-        (True, True, False, True): lambda df, cols, names, dtypes: df.set_axis(
-            pd.Index(cols, name=names[0]), axis=1
-        ).astype({tuple(a): b for a, b in dtypes}),
-        (False, False, False, True): lambda df, cols, names, dtypes: df.astype(
-            {tuple(a): b for a, b in dtypes}
-        ),
-    }
-
     def _decode_pd_df(self, obj) -> pd.DataFrame:
-        out = pd.read_parquet(BytesIO(self.read(obj["__loc__"])))
-        dtypes = obj.get("dtypes", [[0]])
-        cols, names = obj.get("no_pqt_cols", (None, None))
-        return self.decode_pd_df[
-            (
-                # True -> we have no_pqt_cols data
-                not all((cols is None, names is None)),
-                # True -> we have dtypes data
-                dtypes != [[0]] and not self._ignore_pd_dtypes,
-                # True -> we need a multiindex
-                isinstance(names, list) and len(names) > 1,
-                # True -> we have dtypes as a list of lists
-                not any((isinstance(dtypes, dict), self._ignore_pd_dtypes))
-                and len(dtypes) > 0
-                and isinstance(dtypes[0][0], list),
-            )
-        ](out, cols, names, dtypes)
+        return pd.read_parquet(BytesIO(self.read(obj["__loc__"])))
 
     def _decode_pd_series(self, obj) -> pd.Series:
         out = pd.read_parquet(BytesIO(self.read(obj["__loc__"]))).squeeze()
         cols, _names = obj.get("no_pqt_cols", (None, None))
         out.name = tuple(cols) if isinstance(cols, list) else cols
-        return (
-            out.astype(obj["dtypes"])
-            if "dtypes" in obj and not self._ignore_pd_dtypes
-            else out
-        )
+        return out
 
     def _decode_obj(self, obj, klass=None) -> Any:
         if obj["__loc__"] in self._red:
@@ -710,19 +660,6 @@ class DataZip(ZipFile):
                 "__loc__": self._encode_loc_helper(
                     f"{name}.parquet", df, df.to_parquet()
                 ),
-                # pandas 2.0 doesn't raise a ValueError when there are non str column
-                # names, which means we can end up here even when there is a column
-                # multiindex
-                "dtypes": list(df.dtypes.astype(str).to_dict().items()),
-            }
-        except ValueError:
-            return {
-                "__type__": "pdDataFrame",
-                "__loc__": self._encode_loc_helper(
-                    f"{name}.parquet", df, self._str_cols(df).to_parquet()
-                ),
-                "no_pqt_cols": [list(df.columns), list(df.columns.names)],
-                "dtypes": list(df.dtypes.astype(str).to_dict().items()),
             }
         except Exception as exc:
             dt = df.dtypes.to_string().replace("\n", "\n\t")
@@ -736,13 +673,12 @@ class DataZip(ZipFile):
         return {
             "__type__": "pdSeries",
             "__loc__": self._encode_loc_helper(
-                f"{name}.parquet", df, df.to_frame(name="IGNORETHISNAME").to_parquet()
+                f"{name}.parquet", df, df.to_frame().to_parquet()
             ),
             "no_pqt_cols": [
                 list(df.name) if isinstance(df.name, tuple) else df.name,
                 None,
             ],
-            "dtypes": str(df.dtypes),
         }
 
     def _encode_pl_df(self, name: str, df: pl.DataFrame, **kwargs) -> dict:

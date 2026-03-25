@@ -1,7 +1,7 @@
 [project]
 name = "datazip"
 version = "0.1.0"
-description = "Add your description here"
+description = "Seamless serialization and deserialization of complex Python objects."
 readme = "README.md"
 authors = [
     { name = "Alex", email = "alex@colectric.com" }
@@ -9,19 +9,17 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "orjson>=3.8,<3.12",
-    "pandas>= 1.4,< 3.1",
-    "platformdirs>3.0,<4.10",
+    "pandas>= 2.0,< 3.1",
     "polars>=0.20,<1.40",
     "pyarrow>=9,<24",
     "tzdata>=2022.7;platform_system=='Windows'",
-    "pyyaml>=6.0.2",
 ]
 
 [project.scripts]
 datazip = "datazip:main"
 
 [build-system]
-requires = ["uv_build>=0.11.0,<0.12.0"]
+requires = [ "uv_build>=0.11.0,<0.12.0" ]
 build-backend = "uv_build"
 
 [project.optional-dependencies]
@@ -30,15 +28,12 @@ dev = [
     "pytest>=6.2,<9.1",  # test framework
     "plotly>5.10,<6.7",
     "sqlalchemy>1.4,<2.1",
-    "rmi-etoolbox @ git+https://github.com/colectric-dev/etoolbox.git"
 ]
 docs = [
     "mkdocs>=1.5",
     "mkdocs-material>=9.0",
     "mkdocstrings[python]>=0.24",
 ]
-
-
 
 [tool.tox]
 env_list = [ "linters", "prep", "3.13", "3.14", "coverage", "docs" ]

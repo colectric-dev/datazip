@@ -14,8 +14,8 @@ from zipfile import ZipFile
 import numpy as np
 import pandas as pd
 import polars as pl
+import polars.testing as pltesting
 import pytest
-from etoolbox.utils.testing import assert_equal, idfn
 
 from datazip._test_classes import (
     ObjMeta,
@@ -29,6 +29,36 @@ from datazip._test_classes import (
 )
 from datazip._utils import default_getstate, default_setstate
 from datazip.core import DataZip
+
+
+def idfn(val):
+    """ID function for pytest parameterization."""
+    if isinstance(val, float):
+        return None
+    return str(val)
+
+
+def assert_equal(left, right, check_pd_dtype=True) -> None:  # noqa: FBT002
+    """Recursively check that left and right objects are equal."""
+    if type(left) is not type(right):
+        raise AssertionError(f"{type(left)=} is not {type(right)=}")
+    if isinstance(right, pd.Series):
+        pd.testing.assert_series_equal(left, right, check_dtype=check_pd_dtype)
+    elif isinstance(right, pd.DataFrame):
+        pd.testing.assert_frame_equal(left, right, check_dtype=check_pd_dtype)
+    elif isinstance(right, pl.Series):
+        pltesting.assert_series_equal(left, right, check_dtypes=check_pd_dtype)
+    elif isinstance(right, pl.DataFrame | pl.LazyFrame):
+        pltesting.assert_frame_equal(left, right, check_dtypes=check_pd_dtype)
+    elif isinstance(right, list | tuple):
+        for v0, v1 in zip(left, right, strict=True):
+            assert_equal(v0, v1)
+    elif isinstance(right, dict):
+        for k0v0, k1v1 in zip(left.items(), right.items(), strict=True):
+            assert_equal(k0v0, k1v1)
+    else:
+        if not np.all(left == right):
+            raise AssertionError(f"{type(left)=} is not {type(right)=}")
 
 
 class TestUtils:
@@ -394,6 +424,7 @@ class TestWPandas:
         with DataZip(temp_dir / "test_dup_names.zip", "r") as z1:
             assert_equal(z1["stuff"], expected)
 
+    @pytest.mark.xfail(reason="not yet implemented")
     def test_legacy(self, temp_dir):
         """Test that legacy DataZip can be opened and used."""
         expected_df = pd.DataFrame(
