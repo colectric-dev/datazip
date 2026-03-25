@@ -46,8 +46,4 @@ with DataZip(buffer, "r") as z:
 
 ## Installation
 
-```bash
-pip install datazip
-```
-
 See the [Installation](installation.md) page for full details including optional dependencies.
