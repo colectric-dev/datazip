@@ -66,9 +66,7 @@ skip_install = false
 extras = [ "docs" ]
 allowlist_externals = [ "mkdocs" ]
 commands = [
-    [ "mkdocs", "build",
-#        "--strict",
-        "--site-dir", "site" ],
+    [ "mkdocs", "build" ],
 ]
 
 [tool.tox.env.linters]

@@ -1,5 +1,5 @@
 # DataZip
-[![Actions status]( https://github.com/colectric-dev/datazip/workflows/ci/badge.svg)](https://github.com/colectric-dev/datazip/actions)
+[![Actions status]( https://github.com/colectric-dev/datazip/workflows/CI/badge.svg)](https://github.com/colectric-dev/datazip/actions)
 [![GitHub Pages Status]( https://github.com/colectric-dev/datazip/workflows/docs/badge.svg)](https://colectric-dev.github.io/datazip/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
