@@ -1,0 +1,220 @@
+[project]
+name = "datazip"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Alex", email = "alex@colectric.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "orjson>=3.8,<3.12",
+    "pandas>= 1.4,< 3.1",
+    "platformdirs>3.0,<4.10",
+    "polars>=0.20,<1.40",
+    "pyarrow>=9,<24",
+    "tzdata>=2022.7;platform_system=='Windows'",
+    "pyyaml>=6.0.2",
+]
+
+[project.scripts]
+datazip = "datazip:main"
+
+[build-system]
+requires = ["uv_build>=0.11.0,<0.12.0"]
+build-backend = "uv_build"
+
+[project.optional-dependencies]
+dev = [
+    "coverage>=5.3,<7.14",  # Lets us track what code is being tested
+    "pytest>=6.2,<9.1",  # test framework
+    "plotly>5.10,<6.7",
+    "sqlalchemy>1.4,<2.1",
+    "rmi-etoolbox @ git+https://github.com/colectric-dev/etoolbox.git"
+]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.0",
+    "mkdocstrings[python]>=0.24",
+]
+
+
+
+[tool.tox]
+env_list = [ "linters", "prep", "3.13", "3.14", "coverage", "docs" ]
+
+[tool.tox.env.prep]
+skip_install = true
+deps = "coverage"
+commands = [ [ "coverage", "erase" ] ]
+
+[tool.tox.env_run_base]
+allowlist_externals = [ "bash", "ruff", "prek" ]
+runner = "uv-venv-runner"
+extras = [ "dev" ]
+commands = [
+    [ "coverage", "run", "--source={envsitepackagesdir}/datazip", "-m", "pytest", "--doctest-modules", "{envsitepackagesdir}/datazip", "tests/unit" ],
+]
+
+[tool.tox.env.coverage]
+depends = [ "3.13", "3.14" ]
+skip_install = true
+deps = "coverage"
+commands = [
+    [ "coverage", "combine" ],
+    [ "coverage", "report", "--sort=cover" ],
+]
+
+[tool.tox.env.docs]
+description = "Build the MkDocs documentation."
+skip_install = false
+extras = [ "docs" ]
+allowlist_externals = [ "mkdocs" ]
+commands = [
+    [ "mkdocs", "build",
+#        "--strict",
+        "--site-dir", "site" ],
+]
+
+[tool.tox.env.linters]
+description = "Run the prek, flake8 and bandit linters."
+commands = [
+    [ "prek", "run", "--all-files", "--show-diff-on-failure", "--skip", "ruff", "--skip", "ruff-format", "--skip", "prettier", "--skip", "doc8", "--skip", "rstcheck" ],
+    [ "ruff", "check", "." ],
+]
+
+[tool.coverage]
+run.parallel = true
+run.branch = true
+run.source = [ "datazip" ]
+paths.source = [ "src", ".tox/3*/**/site-packages" ]
+report.omit = [ "*/_version.py" ]
+report.show_missing = true
+
+[tool.pytest.ini_options]
+testpaths = [ "." ]
+addopts = [ "--verbose", "--doctest-modules" ]
+log_format = "%(asctime)s [%(levelname)8s] %(name)s:%(lineno)s %(message)s"
+log_date_format = " %Y-%m-%d %H:%M:%S"
+log_cli = true
+log_cli_level = "WARNING"
+doctest_optionflags = [ "NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL", "ELLIPSIS" ]
+filterwarnings = [
+    "ignore:distutils Version classes are deprecated:DeprecationWarning",
+    "ignore:Creating a LegacyVersion:DeprecationWarning:pkg_resources[.*]",
+]
+
+[tool.rstcheck]
+report_level = "WARNING"
+ignore_roles = [ "pr", "issue", "user", "include" ]
+ignore_messages = '(Hyperlink target .* is not referenced\.$|Duplicate implicit target name:|An `AttributeError` error occured.*)'
+ignore_directives = [ "bibliography", "todo", "include", "click" ]
+
+[tool.ruff]
+line-length = 88
+show-fixes = true
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    ".pixi",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+[tool.ruff.format]
+# Enable reformatting of code snippets in docstrings.
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = [  # https://beta.ruff.rs/docs/rules/
+    "A", # flake8-builtins
+    "B", # flake8-bugbear
+    "C",
+    "C4", # flake8-comprehensions
+    "D", # flake8-docstrings
+    "E",  # pycodestyle
+    "F",  # Pyflakes
+    "FBT", # flake8-boolean-trap
+    "G", # flake8-logging-format
+    "I", # isort
+    "TID", # flake8-tidy-imports
+    "N", # pep8-naming
+    "PD",  # pandas
+    "PT", # flake8-pytest-style
+    "PGH", # pygrep-hooks
+    "S", # bandit
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+    "UP", # pyupgrade
+    "W",  # pycodestyle
+    "RUF", # Ruff-specific rules
+    "Q", # flake8-quotes
+]
+ignore = [
+    "D105",
+    "D203",  # 1 blank line required before class docstring
+    "D213",  # Multi-line docstring summary should start at the second line
+    "D401",  # First line of docstring should be in imperative mood: "{first_line}"
+    "D407",  # dashed-underline-after-section, upsets Sphinx
+    "D416",
+    # conflict with ruff format
+    "W191",  # tab-indentation
+    "E111",  # indentation-with-invalid-multiple
+    "E114",  # indentation-with-invalid-multiple-comment
+    "E117",  # over-indented
+    "D206",  # indent-with-spaces
+    "D300",  # triple-single-quotes
+    "Q000",  # bad-quotes-inline-string
+    "Q001",  # bad-quotes-multiline-string
+    "Q002",  # bad-quotes-docstring
+    "Q003",  # avoidable-escaped-quote
+    "COM812",  # missing-trailing-comma
+    "COM819",  # prohibited-trailing-comma
+    "ISC001",  # single-line-implicit-string-concatenation
+    "ISC002",  # multi-line-implicit-string-concatenation
+]
+flake8-tidy-imports.ban-relative-imports = "all"
+flake8-type-checking.strict = true
+mccabe.max-complexity = 15  # Unlike Flake8, default to a complexity level of 10.
+pycodestyle.max-doc-length = 88
+pydocstyle.convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = [ "F401" ]
+"docs/conf.py" = [ "E501" ]
+"docs/benchmarks.py" = [ "D103", "S301", "S311" ]
+"tests/*.py" = [
+    "D100",  # Missing docstring in public module
+    "D101",  # Missing docstring in public class
+    "F841",  # Local variable `pudl` is assigned to but never used
+    "FBT003", # Boolean positional value in function call, can't fix it pytest.param
+    "PD901",
+    "PT006",  # Wrong name(s) type in `@pytest.mark.parametrize`, expected `tuple`
+    "PT011",  # `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception
+    "S101",  # Use of `assert` detected
+    "SIM117",  # Use a single `with` statement with multiple contexts instead of nested `with` statements
+
+]
+"_test_classes.py" = [ "FBT003" ]
