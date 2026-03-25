@@ -1,4 +1,9 @@
 # DataZip
+[![Actions status]( https://github.com/colectric-dev/datazip/workflows/ci/badge.svg)](https://github.com/colectric-dev/datazip/actions)
+[![GitHub Pages Status]( https://github.com/colectric-dev/datazip/workflows/docs/badge.svg)](https://colectric-dev.github.io/datazip/)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
+
 
 **DataZip** is a Python library that extends [`zipfile.ZipFile`](https://docs.python.org/3/library/zipfile.html#zipfile.ZipFile) to provide seamless serialization and deserialization of complex Python objects — a more flexible and readable alternative to pickle for data science workflows.
 
