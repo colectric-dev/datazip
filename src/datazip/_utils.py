@@ -39,7 +39,8 @@ def _objinfo(obj: Any) -> str:
 
 
 def _get_klass(mod_klass: str | list | tuple):
-    with suppress(AttributeError):
+
+    if isinstance(mod_klass, str):
         mod_klass = mod_klass.split("|")
     try:
         mod, qname, *_ = mod_klass

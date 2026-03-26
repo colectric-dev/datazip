@@ -32,17 +32,17 @@ with DataZip(buffer, "r") as z:
 
 ## Supported Types
 
-| Category | Types |
-|---|---|
-| Primitives | `str`, `int`, `float`, `bool`, `None`, `complex` |
-| Collections | `dict`, `list`, `tuple`, `set`, `frozenset` |
-| Date/Time | `datetime`, `pandas.Timestamp` |
-| Paths | `pathlib.Path` |
-| NumPy | `numpy.ndarray` |
-| Pandas | `pandas.DataFrame`, `pandas.Series` (with MultiIndex support) |
-| Polars | `polars.DataFrame`, `polars.LazyFrame`, `polars.Series` |
-| Custom | Any class with `__getstate__`/`__setstate__` |
-| Optional | Plotly figures, SQLAlchemy engines |
+| Category | Types                                                            |
+|---|------------------------------------------------------------------|
+| Primitives | `str`, `int`, `float`, `bool`, `None`, `complex`                 |
+| Collections | `dict`, `list`, `tuple`, `set`, `frozenset`, `deque`, `defaultdict` |
+| Date/Time | `datetime`, `pandas.Timestamp`                                   |
+| Paths | `pathlib.Path`                                                   |
+| NumPy | `numpy.ndarray`                                                  |
+| Pandas | `pandas.DataFrame`, `pandas.Series`                              |
+| Polars | `polars.DataFrame`, `polars.LazyFrame`, `polars.Series`          |
+| Custom | Any class with `__getstate__`/`__setstate__`                     |
+| Optional | Plotly figures                                 |
 
 ## Installation
 

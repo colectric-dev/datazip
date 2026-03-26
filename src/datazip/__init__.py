@@ -10,3 +10,8 @@ try:
 except ImportError:
     logger.warning("Version unknown because package is not installed.")
     __version__ = "unknown"
+
+from datazip.core import DataZip  # noqa: E402
+from datazip.mixin import IOMixin  # noqa: E402
+
+__all__ = ["DataZip", "IOMixin", "__version__"]

@@ -16,13 +16,13 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal
 from zipfile import ZipFile
 from zoneinfo import ZoneInfo
 
-import numpy as np
 import orjson as json
-import pandas as pd
-import polars as pl
 
 from datazip import __version__
+from datazip._optional import numpy as np
+from datazip._optional import pandas as pd
 from datazip._optional import plotly, sqlalchemy
+from datazip._optional import polars as pl
 from datazip._utils import (
     _get_klass,
     _get_username,
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Generator
     from os import PathLike
 
-    from datazip._types import JSONABLE, DZable
+    JSONABLE = float | int | dict | list | str | bool | None
 
 LOGGER = logging.getLogger("datazip")
 
@@ -262,8 +262,8 @@ class DataZip(ZipFile):
     @classmethod
     def replace(
         cls,
-        file_or_new_buffer,
-        old_buffer=None,
+        file_or_new_buffer: str | PathLike | BytesIO,
+        old_buffer: BytesIO | None = None,
         save_old=False,  # noqa: FBT002
         iterwrap=None,
         **kwargs,
@@ -414,7 +414,7 @@ class DataZip(ZipFile):
         """Provide for use of `len` builtin."""
         return len(self._attributes) - (1 if "__state__" in self._attributes else 0)
 
-    def __getitem__(self, key: str | tuple) -> DZable:
+    def __getitem__(self, key: str | tuple) -> Any:
         """Retrieve an item from a [DataZip][datazip.core.DataZip].
 
         Args:
@@ -441,7 +441,7 @@ class DataZip(ZipFile):
                 out = self._attributes["__state__"].get(out.get("__loc__", -9999), out)
         return self._decode(out)
 
-    def __setitem__(self, key: str, value: DZable) -> None:
+    def __setitem__(self, key: str, value: Any) -> None:
         """Write an item to a [DataZip][datazip.core.DataZip]."""
         if self.mode == "r":
             raise ValueError("Writing to DataZip requires mode 'w'")
@@ -454,7 +454,7 @@ class DataZip(ZipFile):
         if (for_attributes := self._encode(key, value)) != "__IGNORE__":
             self._attributes.update({key: for_attributes})
 
-    def get(self, key: str, default=None) -> DZable:
+    def get(self, key: str, default=None) -> Any:
         """Retrieve an item if it is there otherwise return default."""
         return self[key] if key in self else default  # noqa: SIM401
 
@@ -469,7 +469,7 @@ class DataZip(ZipFile):
         """
         self._ids = {}
 
-    def items(self) -> Generator[str, DZable]:
+    def items(self) -> Generator[tuple[str, Any]]:
         """Lazily read name/key value pairs from a [DataZip][datazip.core.DataZip]."""
         for k in self._attributes.keys():  # noqa: SIM118
             if k == "__state__":
@@ -804,10 +804,7 @@ class DataZip(ZipFile):
         np.int64: lambda _, __, item: int(item),
         pd.DataFrame: _encode_pd_df,
         pd.Series: _encode_pd_series,
-        sqlalchemy.engine.Engine: lambda _, __, item: {
-            "__type__": "saEngine",
-            "items": {"url": str(item.url)},
-        },
+        sqlalchemy.engine.Engine: _encode_ignore,
         plotly.graph_objects.Figure: lambda self, name, item: {
             "__type__": "pgoFigure",
             "__loc__": self._encode_loc_helper(f"{name}.pkl", item, pickle.dumps(item)),
@@ -866,10 +863,6 @@ class DataZip(ZipFile):
                 attrs.update({stem: {"__type__": "ndarray", "__loc__": file}})
 
         return attrs
-
-    @staticmethod
-    def _str_cols(df: pd.DataFrame, *args) -> pd.DataFrame:
-        return df.set_axis(list(map(str, range(df.shape[1]))), axis="columns")
 
     def _json_get(self, *args):
         for arg in args:

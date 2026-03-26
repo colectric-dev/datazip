@@ -457,7 +457,7 @@ class TestWPandas:
             z.writestr(
                 "__metadata__.json", json.dumps(meta, ensure_ascii=False, indent=4)
             )
-            z.writestr("profs.parquet", DataZip._str_cols(expected_df).to_parquet())
+            # z.writestr("profs.parquet", DataZip._str_cols(expected_df).to_parquet())
             z.writestr("df2.parquet", df2.to_parquet())
             np.save(temp := BytesIO(), array, allow_pickle=False)
             z.writestr("array.npy", temp.getvalue())
