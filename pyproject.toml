@@ -1,6 +1,6 @@
 [project]
 name = "datazip"
-version = "0.1.0"
+dynamic = [ "version" ]
 description = "Seamless serialization and deserialization of complex Python objects."
 readme = "README.md"
 authors = [
@@ -15,12 +15,18 @@ dependencies = [
     "tzdata>=2022.7;platform_system=='Windows'",
 ]
 
-[project.scripts]
-datazip = "datazip:main"
-
 [build-system]
-requires = [ "uv_build>=0.11.0,<0.12.0" ]
-build-backend = "uv_build"
+requires = [ "hatchling", "hatch-vcs" ]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build]
+hooks.vcs.version-file = "src/datazip/_version.py"
+targets.wheel.only-packages = true
+targets.sdist.only-packages = true
+targets.wheel.sources = ["src"]
 
 [project.optional-dependencies]
 dev = [
@@ -66,7 +72,7 @@ skip_install = false
 extras = [ "docs" ]
 allowlist_externals = [ "mkdocs" ]
 commands = [
-    [ "mkdocs", "gh-deploy", "--force" ],
+    [ "mkdocs", "build" ],
 ]
 
 [tool.tox.env.linters]
