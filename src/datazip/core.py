@@ -804,7 +804,6 @@ class DataZip(ZipFile):
         np.int64: lambda _, __, item: int(item),
         pd.DataFrame: _encode_pd_df,
         pd.Series: _encode_pd_series,
-        sqlalchemy.engine.Engine: _encode_ignore,
         plotly.graph_objects.Figure: lambda self, name, item: {
             "__type__": "pgoFigure",
             "__loc__": self._encode_loc_helper(f"{name}.pkl", item, pickle.dumps(item)),
@@ -814,6 +813,7 @@ class DataZip(ZipFile):
         pl.Series: _encode_pl_series,
         # things to ignore
         partial: _encode_ignore,
+        sqlalchemy.engine.Engine: _encode_ignore,
     }
 
     def _load_legacy_helper(self) -> dict:
@@ -871,37 +871,6 @@ class DataZip(ZipFile):
             except Exception:  # noqa: S110
                 pass
         return {}
-
-    def read_dfs(self) -> Generator[tuple[str, pd.DataFrame | pd.Series]]:
-        """Read all dfs lazily.
-
-        !!! warning "DeprecationWarning"
-            `read_dfs` will be removed in a future version, use
-            [DataZip.items][datazip.core.DataZip.items].
-
-        """
-        warnings.warn(
-            "``read_dfs`` will be removed in a future version, use ``items``.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        for name, *suffix in (x.split(".") for x in self.namelist()):
-            if "parquet" in suffix:
-                yield name, self[name]
-
-    def writed(self, name: str, data: Any):
-        """Write dict, df, str, or some other objects to name.
-
-        !!! warning "DeprecationWarning"
-            `writed` will be removed in a future version, use `self[key] = data`.
-
-        """
-        warnings.warn(
-            "``writed`` will be removed. Use `self[key] = data`",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self[name] = data
 
     def __repr__(self):
         return self.__class__.__qualname__ + f"(file={self.filename}, mode={self.mode})"
