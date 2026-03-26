@@ -471,11 +471,10 @@ class TestWPandas:
             assert_equal(z1["array"], array)
 
     @pytest.mark.parametrize(
-        "key, ignore_dtypes, expected",
+        "key, expected",
         [
             (
                 "df",
-                False,
                 pd.DataFrame(
                     [[0, 1], [2, 3]],
                     columns=pd.MultiIndex.from_tuples(
@@ -483,10 +482,9 @@ class TestWPandas:
                     ),
                 ),
             ),
-            ("mtdf", False, pd.DataFrame()),
+            ("mtdf", pd.DataFrame()),
             (
                 "df_arrow",
-                False,
                 pd.DataFrame(
                     [[0, 1], [2, 3]],
                     columns=pd.MultiIndex.from_tuples(
@@ -494,18 +492,16 @@ class TestWPandas:
                     ),
                 ).astype("int64[pyarrow]"),
             ),
-            ("series", False, pd.Series([1, 2, 3, 4], name="series")),
+            ("series", pd.Series([1, 2, 3, 4], name="series")),
             (
                 "series_arrow",
-                False,
                 pd.Series([1, 2, 3, 4], name="series").astype("int64[pyarrow]"),
             ),
-            ("series_tp_name", False, pd.Series([1, 2, 3, 4], name=(0, "a"))),
-            ("series_no_name", False, pd.Series([1, 2, 3, 4])),
-            ("tuple_w_series", False, (1, pd.Series([1, 2, 3, 4], name="series"))),
+            ("series_tp_name", pd.Series([1, 2, 3, 4], name=(0, "a"))),
+            ("series_no_name", pd.Series([1, 2, 3, 4])),
+            ("tuple_w_series", (1, pd.Series([1, 2, 3, 4], name="series"))),
             (
                 "dup_series_in_dicts",
-                False,
                 (
                     {"series": pd.Series([1, 2, 3, 4], name="series")},
                     {"series": pd.Series([1, 2, 355, 4])},
@@ -513,7 +509,6 @@ class TestWPandas:
             ),
             (
                 "dup_objs",
-                False,
                 [
                     {
                         "a": _TestKlass(
@@ -523,64 +518,23 @@ class TestWPandas:
                     {"a": _TestKlass(a=5, b={"c": pd.Series([1, 2, 355, 4])}, c=5.5)},
                 ],
             ),
-            ("pdTimestamp", False, pd.Timestamp(datetime.now())),
-            (
-                "df",
-                True,
-                pd.DataFrame(
-                    [[0, 1], [2, 3]],
-                    columns=pd.MultiIndex.from_tuples(
-                        [(0, "a"), (1, "b")], names=["l1", "l2"]
-                    ),
-                ),
-            ),
-            ("mtdf", True, pd.DataFrame()),
-            (
-                "df_arrow",
-                True,
-                pd.DataFrame(
-                    [[0, 1], [2, 3]],
-                    columns=pd.MultiIndex.from_tuples(
-                        [(0, "a"), (1, "b")], names=["l1", "l2"]
-                    ),
-                ).astype("int64[pyarrow]"),
-            ),
-            ("series", True, pd.Series([1, 2, 3, 4], name="series")),
-            (
-                "series_arrow",
-                True,
-                pd.Series([1, 2, 3, 4], name="series").astype("int64[pyarrow]"),
-            ),
+            ("pdTimestamp", pd.Timestamp(datetime.now())),
         ],
         ids=idfn,
     )
-    def test_types_w_pd(self, temp_dir, key, ignore_dtypes, expected):
+    def test_types_w_pd(self, temp_dir, key, expected):
         """Test preservation of types, dtypes, and contents."""
-        file = temp_dir / f"test_types_w_pd_{key}_{ignore_dtypes}.zip"
+        file = temp_dir / f"test_types_w_pd_{key}.zip"
         with DataZip(file, "w") as z0:
             z0[key] = expected
             pass
-        with DataZip(file, mode="r", ignore_pd_dtypes=ignore_dtypes) as z1:
+        with DataZip(file, mode="r") as z1:
             read = z1[key]
             if not isinstance(read, type(expected)):
                 raise AssertionError(
                     f"test_types for {key} {type(read)} != {type(expected)}"
                 )
-            # if mode.dtype_backend == 'pyarrow', the original type was not pyarrow,
-            # and we ignore dtypes, what we read back will be a different type than
-            # the original
-            if all(
-                (
-                    "arrow" not in key,
-                    ignore_dtypes,
-                    pd.__version__ < "2.0.0",
-                )
-            ):
-                with pytest.raises(AssertionError):
-                    assert_equal(read, expected)
-                assert_equal(read, expected, check_pd_dtype=False)
-            else:
-                assert_equal(read, expected)
+            assert_equal(read, expected)
 
     def test_dup_names2(self, temp_dir):
         """Test what duplicate named items become."""

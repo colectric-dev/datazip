@@ -7,7 +7,6 @@ A DataZip file is a standard `.zip` archive with a specific internal layout:
 - **Data files**: Large objects are stored as `.parquet` (DataFrames, Series), `.npy` (NumPy arrays), or `.pkl` (pickled objects like Plotly figures).
 - **`__attributes__.json`**: References to all stored objects and their types.
 - **`__metadata__.json`**: Version information, creation timestamp, and username.
-- **`__state__.json`**: Serialized state for custom objects.
 
 This makes DataZip archives human-inspectable: you can open them with any zip tool and read the JSON files directly.
 
@@ -66,11 +65,7 @@ with DataZip(buffer, "w") as z:
 
 ### Pandas DataFrames
 
-DataFrames are stored as Parquet. DataZip preserves:
-
-- Column dtypes
-- **MultiIndex columns** (even though Parquet doesn't natively support them)
-- Index structure
+DataFrames are stored as Parquet.
 
 ```python
 import pandas as pd
@@ -82,14 +77,6 @@ with DataZip(buffer, "w") as z:
     z["multi"] = pd.DataFrame(
         {(0, "x"): [1, 2], (0, "y"): [3, 4], (1, "x"): [5, 6]}
     )
-```
-
-#### PyArrow Dtypes
-
-If you use PyArrow-backed dtypes globally, you can tell DataZip to ignore stored dtype information:
-
-```python
-DataZip("file.zip", "r", ignore_pd_dtypes=True)
 ```
 
 ### Pandas Series
@@ -132,7 +119,7 @@ with DataZip(buffer, "w") as z:
 
 ### Automatic Serialization
 
-Any class with `__dict__` (i.e., not using `__slots__`) will be serialized automatically — no configuration needed:
+Any class will be serialized automatically — no configuration needed:
 
 ```python
 class Config:
@@ -145,7 +132,7 @@ with DataZip(buffer, "w") as z:
     z["cfg"] = cfg
 ```
 
-### Classes with `__slots__`
+#### Classes with `__slots__`
 
 Classes using `__slots__` are also handled automatically:
 
@@ -231,15 +218,11 @@ with DataZip.replace("data.zip", save_old=True, threshold=0.8) as z:
     pass  # "data_old.zip" will be kept alongside the new "data.zip"
 ```
 
-## Ignoring Unserializable Objects
-
-DataZip will warn (not raise) when it encounters an object it cannot serialize (e.g., `functools.partial`, lambdas), and skip it. This means objects with unserializable attributes may be stored incompletely. Always define `__getstate__` to control exactly what gets stored.
-
 ## Deep Key Access
 
-For nested DataZip structures (DataZips containing DataZips), use tuple keys for nested access:
+For nested DataZip structures (e.g. DataZips containing dicts of dicts), pass all the keys for nested access:
 
 ```python
 with DataZip(buffer, "r") as z:
-    value = z[("outer_key", "inner_key")]
+    value = z["outer_key", "inner_key"]
 ```

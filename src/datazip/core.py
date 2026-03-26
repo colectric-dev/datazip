@@ -59,9 +59,9 @@ class DataZip(ZipFile):
         self,
         file: str | PathLike | BytesIO,
         mode: Literal["r", "w"] = "r",
-        ignore_pd_dtypes=False,  # noqa: FBT002
         *args,
         ids_for_dedup=True,
+        ignore_pd_dtypes=False,
         **kwargs,
     ):
         """Create a DataZip.
@@ -73,11 +73,6 @@ class DataZip(ZipFile):
             recipes: Deprecated.
             compression: ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib),
                 ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma).
-            ignore_pd_dtypes: if True, any dtypes stored in a DataZip for
-                `pandas.DataFrame` columns or `pandas.Series` will be
-                ignored. This may be useful when using global settings for
-                `mode.dtype_backend` or `mode.use_nullable_dtypes` to force the use
-                of `pyarrow` types.
             args: additional positional will be passed to
                 `zipfile.ZipFile.__init__`.
             ids_for_dedup: If True, multiple references to the same object will not
@@ -86,6 +81,7 @@ class DataZip(ZipFile):
                 but because ids are not unique for objects with non-overlapping
                 lifetimes, setting to True can result in subsequent new objects NOT
                 being stored because they share an id with an earlier object.
+            ignore_pd_dtypes: Ignored.
             kwargs: keyword arguments will be passed to
                 `zipfile.ZipFile.__init__`.
 
