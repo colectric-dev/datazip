@@ -52,7 +52,6 @@ nav:
   - API Reference:
       - DataZip: api/datazip.md
       - IOMixin: api/mixin.md
-      - Types: api/types.md
 
 markdown_extensions:
   - admonition
