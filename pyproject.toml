@@ -18,18 +18,18 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "orjson>=3.8,<3.12",
+    "orjson>=3.8",
     "tzdata>=2022.7;platform_system=='Windows'",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pandas>= 2.0,< 3.1",
-    "polars>=0.20,<1.40",
-    "pyarrow>=9,<24",
-    "coverage>=5.3,<7.14",  # Lets us track what code is being tested
-    "pytest>=6.2,<9.1",  # test framework
-    "plotly>5.10,<6.7",
+    "pandas>=2.0",
+    "polars>=0.20",
+    "pyarrow>=9",
+    "coverage>=5.3",  # Lets us track what code is being tested
+    "pytest>=6.2",  # test framework
+    "plotly>5.10",
 ]
 docs = [
     "mkdocs>=1.5",
@@ -82,7 +82,7 @@ commands = [
 ]
 
 [tool.tox.env.linters]
-description = "Run the prek, flake8 and bandit linters."
+description = "Run the prek and ruff linters."
 commands = [
     [ "prek", "run", "--all-files", "--show-diff-on-failure", "--skip", "ruff", "--skip", "ruff-format", "--skip", "prettier", "--skip", "doc8", "--skip", "rstcheck" ],
     [ "ruff", "check", "." ],
@@ -108,12 +108,6 @@ filterwarnings = [
     "ignore:distutils Version classes are deprecated:DeprecationWarning",
     "ignore:Creating a LegacyVersion:DeprecationWarning:pkg_resources[.*]",
 ]
-
-[tool.rstcheck]
-report_level = "WARNING"
-ignore_roles = [ "pr", "issue", "user", "include" ]
-ignore_messages = '(Hyperlink target .* is not referenced\.$|Duplicate implicit target name:|An `AttributeError` error occured.*)'
-ignore_directives = [ "bibliography", "todo", "include", "click" ]
 
 [tool.ruff]
 line-length = 88
