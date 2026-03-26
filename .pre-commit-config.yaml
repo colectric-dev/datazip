@@ -30,9 +30,9 @@ repos:
 
   # Linter and formatter that replaces flake8, isort, etc.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.0
+    rev: v0.15.8
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: [--fix, --exit-non-zero-on-fix]
       - id: ruff-format
 
@@ -60,15 +60,3 @@ repos:
       - id: rstcheck
         additional_dependencies: ["rstcheck[toml, sphinx]"]
         args: [--config, pyproject.toml]
-
-# Configuration for pre-commit.ci
-ci:
-  autofix_commit_msg: |
-    [pre-commit.ci] auto fixes from pre-commit.com hooks
-
-    For more information, see https://pre-commit.ci
-  autofix_prs: true
-  autoupdate_branch: main
-  autoupdate_commit_msg: "[pre-commit.ci] pre-commit autoupdate"
-  autoupdate_schedule: weekly
-  submodules: false
