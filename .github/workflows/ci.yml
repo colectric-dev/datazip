@@ -10,9 +10,6 @@ jobs:
       matrix:
         os: ["ubuntu-latest", "windows-latest"]
       fail-fast: false
-    env:
-      ETB_AZURE_SAS_TOKEN: ${{ secrets.ETB_AZURE_SAS_TOKEN }}
-      ETB_AZURE_ACCOUNT_NAME: ${{ secrets.ETB_AZURE_ACCOUNT_NAME }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -33,12 +30,6 @@ jobs:
       - name: build package
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: uv build
-      - name: upload package
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: datazip-packages
-          path: dist/*
 
       - name: Upload coverage data
         if: matrix.os == 'ubuntu-latest'

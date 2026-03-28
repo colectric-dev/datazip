@@ -22,6 +22,12 @@ dependencies = [
     "tzdata>=2022.7;platform_system=='Windows'",
 ]
 
+[project.urls]
+homepage = 'https://github.com/colectric-dev/datazip'
+source = 'https://github.com/colectric-dev/datazip'
+documentation = 'https://colectric-dev.github.io/datazip/'
+issues = 'https://github.com/colectric-dev/datazip/issues'
+
 [project.optional-dependencies]
 dev = [
     "pandas>=2.0",
