@@ -1,7 +1,11 @@
 # DataZip
 [![Actions status]( https://github.com/colectric-dev/datazip/workflows/CI/badge.svg)](https://github.com/colectric-dev/datazip/actions)
 [![GitHub Pages Status]( https://github.com/colectric-dev/datazip/workflows/docs/badge.svg)](https://colectric-dev.github.io/datazip/)
+[![PyPI Latest Release](https://img.shields.io/pypi/v/datazip.svg)](https://pypi.org/project/datazip/)
+![GitHub License](https://img.shields.io/github/license/colectric-dev/datazip)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv
+)
 
 
 
@@ -37,17 +41,19 @@ with DataZip(buffer, "r") as z:
 
 ## Supported Types
 
-| Category | Types                                                            |
-|---|------------------------------------------------------------------|
-| Primitives | `str`, `int`, `float`, `bool`, `None`, `complex`                 |
-| Collections | `dict`, `list`, `tuple`, `set`, `frozenset`, `deque`, `defaultdict` |
-| Date/Time | `datetime`, `pandas.Timestamp`                                   |
-| Paths | `pathlib.Path`                                                   |
-| NumPy | `numpy.ndarray`                                                  |
-| Pandas | `pandas.DataFrame`, `pandas.Series`                              |
-| Polars | `polars.DataFrame`, `polars.LazyFrame`, `polars.Series`          |
-| Custom | Any class with `__getstate__`/`__setstate__`                     |
-| Optional | Plotly figures                                 |
+| Category | Types                                                                                                                         |
+|---|-------------------------------------------------------------------------------------------------------------------------------|
+| Primitives | `str`, `int`, `float`, `bool`, `None`, `complex`                                                                              |
+| Collections | `dict`, `list`, `tuple`, `set`, `frozenset`, `deque`, `defaultdict`                                                           |
+| Date/Time | `datetime`, `pandas.Timestamp`                                                                                                |
+| Paths | `pathlib.Path`                                                                                                                | |
+| Custom | Any class with `__getstate__`/`__setstate__`                                                                                  |
+| Optional | `numpy.ndarray`, `pandas.DataFrame`, `pandas.Series`, `polars.DataFrame`, `polars.LazyFrame`, `polars.Series`, Plotly figures |
 
+# Installation
+
+```bash
+pip install datazip
+```
 
 See the [Installation](installation.md) page for full details including optional dependencies.
