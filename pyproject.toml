@@ -30,12 +30,8 @@ issues = 'https://github.com/colectric-dev/datazip/issues'
 
 [project.optional-dependencies]
 dev = [
-    "pandas>=2.0",
-    "polars>=0.20",
-    "pyarrow>=9",
     "coverage>=5.3",  # Lets us track what code is being tested
     "pytest>=6.2",  # test framework
-    "plotly>5.10",
 ]
 docs = [
     "mkdocs>=1.5",
@@ -43,6 +39,10 @@ docs = [
     "mkdocstrings[python]>=0.24",
     "matplotlib>=3.7",
 ]
+polars = [ "polars>=0.20" ]
+pandas = [ "pandas>=2.0", "pyarrow>=9" ]
+plotly = [ "plotly>5.10" ]
+optional = [ "datazip[polars,pandas,plotly]" ]
 
 [tool.hatch.version]
 source = "vcs"
@@ -54,7 +54,7 @@ targets.sdist.only-packages = true
 targets.wheel.sources = ["src"]
 
 [tool.tox]
-env_list = [ "linters", "prep", "3.12", "3.13", "3.14", "coverage" ]
+env_list = [ "linters", "prep", "3.12", "3.13", "3.14", "3.12-optional", "3.13-optional", "3.14-optional", "coverage" ]
 
 [tool.tox.env.prep]
 skip_install = true
@@ -62,15 +62,23 @@ deps = "coverage"
 commands = [ [ "coverage", "erase" ] ]
 
 [tool.tox.env_run_base]
-allowlist_externals = [ "bash", "ruff", "prek" ]
-runner = "uv-venv-runner"
 extras = [ "dev" ]
+runner = "uv-venv-runner"
 commands = [
     [ "coverage", "run", "--source={envsitepackagesdir}/datazip", "-m", "pytest", "--doctest-modules", "{envsitepackagesdir}/datazip", "tests/unit" ],
 ]
 
+[tool.tox.env."3.12-optional"]
+extras = [ "dev", "optional" ]
+
+[tool.tox.env."3.13-optional"]
+extras = [ "dev", "optional" ]
+
+[tool.tox.env."3.14-optional"]
+extras = [ "dev", "optional" ]
+
 [tool.tox.env.coverage]
-depends = [ "3.12", "3.13", "3.14" ]
+depends = [ "3.12", "3.13", "3.14", "3.12-optional", "3.13-optional", "3.14-optional" ]
 skip_install = true
 deps = "coverage"
 commands = [
@@ -89,6 +97,7 @@ commands = [
 
 [tool.tox.env.linters]
 description = "Run the prek and ruff linters."
+allowlist_externals = [ "ruff", "prek" ]
 commands = [
     [ "prek", "run", "--all-files", "--show-diff-on-failure", "--skip", "ruff", "--skip", "ruff-format", "--skip", "prettier", "--skip", "doc8", "--skip", "rstcheck" ],
     [ "ruff", "check", "." ],

@@ -93,9 +93,6 @@ class DataZip(ZipFile):
 
             >>> buffer = BytesIO()  # can also be a file-like object
             >>> with DataZip(file=buffer, mode="w") as z0:
-            ...     z0["df"] = pd.DataFrame(
-            ...         {(0, "a"): [2.4, 8.9], (0, "b"): [3.5, 6.2]}
-            ...     )
             ...     z0["foo"] = {
             ...         "a": (1, (2, {3})),
             ...         "b": frozenset({1.5, 3}),
@@ -104,17 +101,6 @@ class DataZip(ZipFile):
 
             Getting items from [DataZip][datazip.core.DataZip], like setting them, uses
             standard Python subscripting.
-
-            For `pandas.DataFrame`, it stores them as `parquet` and preserves
-            `pandas.MultiIndex` columns, even when they cannot normally be stored
-            in a `parquet` file.
-
-            >>> with DataZip(buffer, "r") as z1:
-            ...     z1["df"]  # doctest: +NORMALIZE_WHITESPACE
-                 0
-                 a    b
-            0  2.4  3.5
-            1  8.9  6.2
 
             While always preferable to use a context manager as above, here it's more
             convenient to keep the object open. Even more unusual types that can't
@@ -127,16 +113,11 @@ class DataZip(ZipFile):
             Checking to see if an item is in a [DataZip][datazip.core.DataZip] uses
             standard Python syntax.
 
-            >>> "df" in z1
-            True
-
-            You can also check by filename. And check the number of items.
-
-            >>> "df.parquet" in z1
+            >>> "foo" in z1
             True
 
             >>> len(z1)
-            2
+            1
 
             When not used with a context manager, [DataZip][datazip.core.DataZip] should
             close itself automatically but it's not a bad idea to make sure.
@@ -297,7 +278,7 @@ class DataZip(ZipFile):
 
             >>> file = Path.home() / "test.zip"
             >>> with DataZip(file=file, mode="w") as z0:
-            ...     z0["series"] = pd.Series([1, 2, 4], name="series")
+            ...     z0["series"] = [1, 2, 4]
 
             Create a replacement DataZip.
 
@@ -306,10 +287,7 @@ class DataZip(ZipFile):
             The replacement has the old content.
 
             >>> z1["series"]
-            0    1
-            1    2
-            2    4
-            Name: series, dtype: int64
+            [1, 2, 4]
 
             We can also now add to it.
 
@@ -331,10 +309,7 @@ class DataZip(ZipFile):
             >>> z2 = DataZip(file, "r")
 
             >>> z2["series"]
-            0    1
-            1    2
-            2    4
-            Name: series, dtype: int64
+            [1, 2, 4]
 
             >>> z1["foo"]
             'bar'

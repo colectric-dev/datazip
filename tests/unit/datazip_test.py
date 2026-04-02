@@ -11,12 +11,11 @@ from traceback import TracebackException
 from typing import NamedTuple
 from zipfile import ZipFile
 
-import numpy as np
-import pandas as pd
-import polars as pl
-import polars.testing as pltesting
 import pytest
 
+from datazip._optional import numpy as np
+from datazip._optional import pandas as pd
+from datazip._optional import polars as pl
 from datazip._test_classes import (
     ObjMeta,
     _KlassSlots,
@@ -29,36 +28,7 @@ from datazip._test_classes import (
 )
 from datazip._utils import default_getstate, default_setstate
 from datazip.core import DataZip
-
-
-def idfn(val):
-    """ID function for pytest parameterization."""
-    if isinstance(val, float):
-        return None
-    return str(val)
-
-
-def assert_equal(left, right, check_pd_dtype=True) -> None:  # noqa: FBT002
-    """Recursively check that left and right objects are equal."""
-    if type(left) is not type(right):
-        raise AssertionError(f"{type(left)=} is not {type(right)=}")
-    if isinstance(right, pd.Series):
-        pd.testing.assert_series_equal(left, right, check_dtype=check_pd_dtype)
-    elif isinstance(right, pd.DataFrame):
-        pd.testing.assert_frame_equal(left, right, check_dtype=check_pd_dtype)
-    elif isinstance(right, pl.Series):
-        pltesting.assert_series_equal(left, right, check_dtypes=check_pd_dtype)
-    elif isinstance(right, pl.DataFrame | pl.LazyFrame):
-        pltesting.assert_frame_equal(left, right, check_dtypes=check_pd_dtype)
-    elif isinstance(right, list | tuple):
-        for v0, v1 in zip(left, right, strict=True):
-            assert_equal(v0, v1)
-    elif isinstance(right, dict):
-        for k0v0, k1v1 in zip(left.items(), right.items(), strict=True):
-            assert_equal(k0v0, k1v1)
-    else:
-        if not np.all(left == right):
-            raise AssertionError(f"{type(left)=} is not {type(right)=}")
+from tests.conftest import assert_equal, idfn
 
 
 class TestUtils:
@@ -204,13 +174,28 @@ def test_sqlalchemy(temp_dir):
         ("datetime", datetime.now()),
         # this shouldn't really exist outside an array, right?
         pytest.param(
-            "npdatetime64", np.datetime64(datetime.now()), marks=pytest.mark.xfail
+            "npdatetime64",
+            np.datetime64(datetime.now()),
+            marks=[
+                pytest.mark.xfail,
+                pytest.mark.skipif(
+                    importlib.util.find_spec("numpy") is None,
+                    reason="numpy not installed",
+                ),
+            ],
         ),
         ("namedtuple_nested", [(ObjMeta("this", "that"), 5), 4, (1, 2)]),
         ("namedtuple_as_key", {ObjMeta("this", "that"): 5}),
         ("namedtuple_as_key_in_dd", defaultdict(list, {ObjMeta("this", "that"): 5})),
         ("namedtuple", ObjMeta("this", "that")),
-        ("np.array", np.array([[0.0, 4.1], [3.2, 2.1]])),
+        pytest.param(
+            "np.array",
+            np.array([[0.0, 4.1], [3.2, 2.1]]),
+            marks=pytest.mark.skipif(
+                importlib.util.find_spec("numpy") is None,
+                reason="numpy not installed",
+            ),
+        ),
         ("_TestKlass", _TestKlass(a=5, b={"c": (2, 3.5)}, c=5.5)),
         ("path", Path.home()),
         ("type", [list, tuple, DataZip]),
@@ -375,6 +360,9 @@ def test_load_no_dump(temp_dir):
     assert obj1["a"]["foo"] == 2 and obj1["b"] == "a string"  # noqa: PT018
 
 
+@pytest.mark.skipif(
+    importlib.util.find_spec("pandas") is None, reason="pandas not installed"
+)
 class TestWPandas:
     """Tests that involve pandas.
 

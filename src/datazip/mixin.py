@@ -25,8 +25,6 @@ class IOMixin:
 
     Examples:
         >>> from io import BytesIO
-        >>> import numpy as np
-        >>> import pandas as pd
 
         Create a class that inherits from [IOMixin][datazip.mixin.IOMixin].
 
@@ -37,8 +35,8 @@ class IOMixin:
         As nested as you like.
 
         >>> inst = MyClass()
-        >>> inst.foo = {"a": 1, "b": (1, 2, 3), "c": np.array([1, 2, 4])}
-        >>> inst.bar = pd.Series([1, 2, 3])
+        >>> inst.foo = {"a": 1, "b": (1, 2, 3), "c": [1, 2, 4]}
+        >>> inst.bar = [1, 2, 3]
 
         The object can now be saved to a file, or buffer for this example.
 
@@ -49,11 +47,11 @@ class IOMixin:
         And we can bring it back, as if it was pickled. Usually.
 
         >>> inst = MyClass.from_file(buffer)
-        >>> type(inst.bar)  # doctest: +ELLIPSIS
-        <class 'pandas...Series'>
+        >>> type(inst.bar)
+        <class 'list'>
 
         >>> inst.foo
-        {'a': 1, 'b': (1, 2, 3), 'c': array([1, 2, 4])}
+        {'a': 1, 'b': (1, 2, 3), 'c': [1, 2, 4]}
 
         If your class has funny things in it like lambdas or unserializable objects,
         you will need to define `__getstate__` and `__setstate__`. If you don't use
