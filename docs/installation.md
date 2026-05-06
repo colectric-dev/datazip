@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Python ≥ 3.13
+- Python ≥ 3.12
 
 ## Basic Installation
 
@@ -22,25 +22,18 @@ These are installed automatically:
 
 | Package | Purpose |
 |---|---|
-| `pandas` | DataFrame and Series serialization |
-| `polars` | Polars DataFrame/Series serialization |
-| `pyarrow` | Parquet file format for tabular data |
-| `numpy` | Array serialization |
 | `orjson` | Fast JSON encoding/decoding |
-| `pyyaml` | YAML support |
-| `platformdirs` | Platform-specific directory paths |
 
 ## Optional Dependencies
 
 Some types require additional packages:
 
-```bash
-# Plotly figure support
-pip install plotly
+| Package       | Purpose                                   |
+|---------------|-------------------------------------------|
+| `pandas` and `pyarrow` | Pandas DataFrame and Series serialization |
+| `polars`      | Polars DataFrame/Series serialization     |
+| `numpy`       | Array serialization                       |
 
-# SQLAlchemy engine support
-pip install sqlalchemy
-```
 
 ## Development Installation
 

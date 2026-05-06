@@ -1,12 +1,13 @@
 # DataZip
 
-**DataZip** is a Python library that extends [`zipfile.ZipFile`](https://docs.python.org/3/library/zipfile.html#zipfile.ZipFile) to provide seamless serialization and deserialization of complex Python objects — a more flexible and readable alternative to pickle for data science workflows.
+**DataZip** is a Python library that extends [`zipfile.ZipFile`](https://docs.python.org/3/library/zipfile.html#zipfile.ZipFile) to provide seamless serialization and deserialization of complex Python objects — a more portable and readable alternative to pickle for data science workflows.
 
 ## Why DataZip?
 
 - **Human-inspectable archives**: DataZip files are standard `.zip` files. You can open them with any archive tool and inspect the contents.
 - **Broad type support**: Works out of the box with pandas DataFrames/Series, NumPy arrays, Polars DataFrames, datetimes, paths, sets, frozensets, complex numbers, and custom classes.
 - **Efficient storage**: Tabular data is stored as Parquet; arrays as `.npy`. JSON is used for metadata and simple types.
+- **Lazy loading**: Objects and data are only deserialized when they are accessed, allowing efficient loading of objects within huge files. Nested access avoids deserialzing unnecessary enclosing objects.
 - **No pickle by default**: Most types are serialized without pickle, making files safer and more portable.
 - **Custom class integration**: Any class that implements `__getstate__`/`__setstate__` (the standard pickle protocol) works automatically. The `IOMixin` makes it even simpler.
 

@@ -29,7 +29,7 @@ REPEATS = 7
 # ---------------------------------------------------------------------------
 
 
-def make_nested_dict(depth: int = 10, breadth: int = 2) -> dict:
+def make_nested_dict(depth: int, breadth: int) -> dict:
     """Return a recursively nested dict *depth* levels deep.
 
     With breadth=2 this creates 2**10 = 1,024 leaf nodes.
@@ -48,7 +48,7 @@ def make_mixed_object() -> dict:
     """Return a dict that mimics a realistic analysis result object.
 
     Contains:
-    - one large DataFrame  (500k rows × 20 cols)
+    - one large DataFrame  (5M rows × 20 cols)
     - two medium DataFrames (50k rows × 10 cols each)
     - a nested config dict
     - a list of category labels
@@ -63,7 +63,7 @@ def make_mixed_object() -> dict:
         return pd.DataFrame(d)
 
     return {
-        "results": _df(500_000, 20),
+        "results": _df(5_000_000, 20),
         "train_metrics": _df(50_000, 10),
         "val_metrics": _df(50_000, 10),
         "config": {
@@ -75,7 +75,7 @@ def make_mixed_object() -> dict:
             },
             "cv_folds": 5,
         },
-        "category_labels": [f"class_{i}" for i in range(200)],
+        "category_labels": [f"class_{i}" for i in range(20)],
         "description": (
             "Gradient boosting model trained on synthetic data. "
             "Metrics recorded at each epoch for train and validation splits."
@@ -108,7 +108,35 @@ def bench_pickle(obj, repeats: int = REPEATS) -> dict[str, float]:
     write_s = _time(lambda: pickle.dump(obj, io.BytesIO()), repeats)
     read_s = _time(lambda: pickle.loads(data), repeats)
 
-    return {"write_s": write_s, "read_s": read_s, "size_mb": size_mb}
+    return {"write_s": write_s * 1e3, "read_s": read_s * 1e3, "size_mb": size_mb}
+
+
+def bench_partial_read(obj: dict, key: str, repeats: int = REPEATS) -> dict[str, float]:
+    """Benchmark reading a single key: pickle must deserialize everything; DataZip does not.
+
+    With pickle, accessing any one key requires deserializing the entire blob —
+    including every large DataFrame stored in it.  With DataZip, only the
+    requested entry is deserialized; the binary files (Parquet, npy, …) for all
+    other entries are never read.
+    """  # noqa: E501, W505
+    buf = io.BytesIO()
+    pickle.dump(obj, buf)
+    pkl_data = buf.getvalue()
+
+    dz_buf = io.BytesIO()
+    with DataZip(dz_buf, "w") as z:
+        for k, v in obj.items():
+            z[k] = v
+    dz_data = dz_buf.getvalue()
+
+    pkl_s = _time(lambda: pickle.loads(pkl_data)[key], repeats)
+
+    def _dz_read():
+        with DataZip(io.BytesIO(dz_data), "r") as z:
+            _ = z[key]
+
+    dz_s = _time(_dz_read, repeats)
+    return {"pickle_s": pkl_s * 1e3, "datazip_s": dz_s * 1e3}
 
 
 def bench_datazip_dict(obj: dict, repeats: int = REPEATS) -> dict[str, float]:
@@ -125,19 +153,15 @@ def bench_datazip_dict(obj: dict, repeats: int = REPEATS) -> dict[str, float]:
     data = buf.getvalue()
 
     def _write():
-        with DataZip(io.BytesIO(), "w") as z:
-            for k, v in obj.items():
-                z[k] = v
+        DataZip.dump(obj, io.BytesIO())
 
     def _read():
-        with DataZip(io.BytesIO(data), "r") as z:
-            for k in z.keys():  # noqa: SIM118
-                _ = z[k]
+        _ = DataZip.load(io.BytesIO(data))
 
     write_s = _time(_write, repeats)
     read_s = _time(_read, repeats)
 
-    return {"write_s": write_s, "read_s": read_s, "size_mb": size_mb}
+    return {"write_s": write_s * 1e3, "read_s": read_s * 1e3, "size_mb": size_mb}
 
 
 # ---------------------------------------------------------------------------
@@ -192,13 +216,45 @@ def _bar_chart(
     ax.spines[["top", "right"]].set_visible(False)
 
 
+def make_partial_figure(result: dict[str, float], key: str) -> None:
+    """Save a two-bar chart for the single-item read benchmark."""
+    IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(5, 3.8))
+    labels = ["pickle\n(full deserialize)", "DataZip\n(lazy, 1 entry)"]
+    vals = [result["pickle_s"], result["datazip_s"]]
+    colors = [_PALETTE["pickle"], _PALETTE["DataZip"]]
+    bars = ax.bar(labels, vals, color=colors, width=0.45)
+    for bar in bars:
+        h = bar.get_height()
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            h * 1.02,
+            f"{h:.3f} ms",
+            ha="center",
+            va="bottom",
+            fontsize=9,
+        )
+    ax.set_ylabel("Time (ms)")
+    ax.set_title(
+        f"Single-item read (key='{key}')\npickle vs DataZip", fontweight="bold"
+    )
+    ax.yaxis.grid(True, linestyle="--", alpha=0.6)  # noqa: FBT003
+    ax.set_axisbelow(True)
+    ax.spines[["top", "right"]].set_visible(False)
+    fig.tight_layout()
+    path = IMAGES_DIR / "bench_partial_read.png"
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    print(f"  Saved {path}")
+
+
 def make_figures(results: dict[str, dict[str, dict[str, float]]]) -> None:
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
     display_labels = list(results.keys())
     metrics = [
-        ("write_s", "Time (s)", "Write Time"),
-        ("read_s", "Time (s)", "Read Time"),
+        ("write_s", "Time (ms)", "Write Time"),
+        ("read_s", "Time (ms)", "Read Time"),
         ("size_mb", "Size (MB)", "File Size"),
     ]
     filenames = ["bench_write.png", "bench_read.png", "bench_size.png"]
@@ -221,8 +277,10 @@ def make_figures(results: dict[str, dict[str, dict[str, float]]]) -> None:
 
 
 def main() -> None:
-    print("\n── Nested Dict (depth=10, 1 k leaves) ──")
-    nested = make_nested_dict()
+    depth = 10
+    breadth = 2
+    print(f"\n── Nested Dict (depth={depth}, {breadth**10} leaves) ──")
+    nested = make_nested_dict(depth, breadth)
 
     print("  pickle  ...", end=" ", flush=True)
     nested_pkl = bench_pickle(nested)
@@ -259,6 +317,20 @@ def main() -> None:
         f"size={r['size_mb']:.2f} MB"
     )
 
+    TARGET_KEY = "config"  # noqa: N806
+    print(f"\n── Single-item read (key='{TARGET_KEY}' from mixed object) ──")
+    print(
+        f"  pickle must deserialize the entire blob (all DataFrames included).\n"
+        f"  DataZip only decodes the '{TARGET_KEY}' entry; other files are never read."
+    )
+    partial = bench_partial_read(mixed, TARGET_KEY)
+    speedup = partial["pickle_s"] / partial["datazip_s"]
+    print(
+        f"  pickle={partial['pickle_s']:.0f}ms  "
+        f"DataZip={partial['datazip_s'] * 1e3:.0f}us  "
+        f"speedup={speedup:.1f}×"  # noqa: RUF001
+    )
+
     results = {
         "Nested Dict\n(depth=10, 1 k leaves)": {
             "pickle": nested_pkl,
@@ -272,6 +344,7 @@ def main() -> None:
 
     print("\nGenerating figures ...")
     make_figures(results)
+    make_partial_figure(partial, TARGET_KEY)
 
     print("\n### Markdown results table\n")
     hdr = (
@@ -286,8 +359,8 @@ def main() -> None:
         p, d = r["pickle"], r["datazip"]
         print(
             f"| {name} "
-            f"| {p['write_s']:.3f} s | {d['write_s']:.3f} s "
-            f"| {p['read_s']:.3f} s | {d['read_s']:.3f} s "
+            f"| {p['write_s']:.1f} ms | {d['write_s']:.1f} ms "
+            f"| {p['read_s']:.1f} ms | {d['read_s']:.1f} ms "
             f"| {p['size_mb']:.2f} MB | {d['size_mb']:.2f} MB |"
         )
 

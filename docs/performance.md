@@ -76,27 +76,64 @@ This is where the trade-off becomes clear:
 
 ---
 
+## Partial / Lazy Read
+
+A key advantage of DataZip's zip-based format is that **entries are independent**.
+When you read a single key, only that entry is deserialized — the binary files
+(Parquet, NumPy, …) stored for every other key are never opened.
+
+`pickle` has no such capability: deserializing *any* part of a pickle blob
+requires parsing the entire stream from the beginning.
+
+The benchmark below reads one small key (`config`, a nested dict) from the
+mixed object that also contains a 5 M-row DataFrame and two 50 k-row
+DataFrames:
+
+```python
+# pickle — must deserialize all three DataFrames just to reach 'config'
+obj = pickle.loads(data)
+result = obj["config"]
+
+# DataZip — reads only the 'config' JSON entry; Parquet files are never touched
+with DataZip(io.BytesIO(data), "r") as z:
+    result = z["config"]
+```
+
+![Partial read comparison](images/bench_partial_read.png)
+
+DataZip is substantially faster here because the total work is proportional to
+the size of the requested entry, not the size of the whole archive.
+
+---
+
 ## Summary Table
 
 Measurements from a single representative run:
 
 | Benchmark | Write: pickle | Write: DataZip | Read: pickle | Read: DataZip | Size: pickle | Size: DataZip |
 |---|---|---|---|---|---|---|
-| Nested Dict (depth=10, 1 k leaves) | 0.000 s | 0.005 s | 0.001 s | 0.004 s | 0.17 MB | 1.83 MB |
-| Mixed Object (3 DataFrames + metadata) | 0.006 s | 0.152 s | 0.003 s | 0.021 s | 88.00 MB | 58.19 MB |
+| Nested Dict (depth=10, 1 k leaves) | 0.5 ms | 5.4 ms | 0.6 ms | 3.9 ms | 0.17 MB | 1.83 MB |
+| Mixed Object (3 DataFrames + metadata) | 70.0 ms | 969.3 ms | 52.4 ms | 159.8 ms | 808.00 MB | 509.86 MB |
+
+**Single-item read** — reading only `config` from the mixed object:
+
+| | pickle (full deserialize) | DataZip (lazy, 1 entry) |
+|---|---------------------------|-------------------------|
+| Mixed Object → `config` key | 54 ms                     | 26 us |
 
 ---
 
 ## When to use DataZip vs pickle
 
-| | DataZip | pickle |
-|---|---|---|
-| Human-inspectable archive | ✓ | ✗ |
-| Smaller file for DataFrames | ✓ | ✗ |
-| Parquet interoperability | ✓ | ✗ |
-| Faster for nested dicts | ✗ | ✓ |
+|                                        | DataZip | pickle |
+|----------------------------------------|---|---|
+| Human-inspectable archive              | ✓ | ✗ |
+| Smaller file for DataFrames            | ✓ | ✗ |
+| Parquet interoperability               | ✓ | ✗ |
+| Faster for nested dicts                | ✗ | ✓ |
+| Faster for partial reads               | ✓ | ✗ |
 | Safer (no arbitrary code exec on load) | ✓ | ✗ |
-| Reproducible across Python versions | ✓ (mostly) | ✗ |
+| Reproducible across Python versions    | ✓ (mostly) | ✗ |
 
 !!! tip "Reducing DataZip file size for nested structures"
     Pass `compression=ZIP_DEFLATED` to enable zip compression:
