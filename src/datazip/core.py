@@ -371,9 +371,7 @@ class DataZip(ZipFile):
         if self.mode == "w":
             self.writestr(
                 "__attributes__.json",
-                json.dumps(
-                    self._attributes, option=json.OPT_NON_STR_KEYS | json.OPT_INDENT_2
-                ),
+                json.dumps(self._attributes, option=json.OPT_NON_STR_KEYS),
             )
             self.writestr("__metadata__.json", json.dumps(self._metadata))
         self._red = {}

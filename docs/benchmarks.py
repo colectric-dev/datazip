@@ -305,7 +305,7 @@ def main() -> None:
     mixed_pkl = bench_pickle(mixed)
     r = mixed_pkl
     print(
-        f"write={r['write_s']:.3f}s  read={r['read_s']:.3f}s  "
+        f"write={r['write_s']:.3f}ms  read={r['read_s']:.3f}ms  "
         f"size={r['size_mb']:.2f} MB"
     )
 
@@ -313,7 +313,7 @@ def main() -> None:
     mixed_dz = bench_datazip_dict(mixed)
     r = mixed_dz
     print(
-        f"write={r['write_s']:.3f}s  read={r['read_s']:.3f}s  "
+        f"write={r['write_s']:.3f}ms  read={r['read_s']:.3f}ms  "
         f"size={r['size_mb']:.2f} MB"
     )
 

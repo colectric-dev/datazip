@@ -112,8 +112,8 @@ Measurements from a single representative run:
 
 | Benchmark | Write: pickle | Write: DataZip | Read: pickle | Read: DataZip | Size: pickle | Size: DataZip |
 |---|---|---|---|---|---|---|
-| Nested Dict (depth=10, 1 k leaves) | 0.5 ms | 5.4 ms | 0.6 ms | 3.9 ms | 0.17 MB | 1.83 MB |
-| Mixed Object (3 DataFrames + metadata) | 70.0 ms | 969.3 ms | 52.4 ms | 159.8 ms | 808.00 MB | 509.86 MB |
+| Nested Dict (depth=10, 1 k leaves) | 0.5 ms | 5.2 ms | 0.6 ms | 3.9 ms | 0.17 MB | 0.25 MB |
+| Mixed Object (3 DataFrames + metadata) | 70.3 ms | 1001.5 ms | 54.4 ms | 152.1 ms | 808.00 MB | 509.86 MB |
 
 **Single-item read** — reading only `config` from the mixed object:
 
