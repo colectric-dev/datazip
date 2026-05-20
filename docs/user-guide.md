@@ -4,7 +4,7 @@
 
 A DataZip file is a standard `.zip` archive with a specific internal layout:
 
-- **Data files**: Large objects are stored as `.parquet` (DataFrames, Series), `.npy` (NumPy arrays), or `.pkl` (pickled objects like Plotly figures).
+- **Data files**: Common data objects are stored as `.parquet` (DataFrames, Series), `.npy` (NumPy arrays), or `.pkl` (pickled objects like Plotly figures).
 - **`__attributes__.json`**: References to all stored objects and their types.
 - **`__metadata__.json`**: Version information, creation timestamp, and username.
 
